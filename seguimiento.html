@@ -868,7 +868,6 @@ html.lsPoOn body>*:not(#lsPo){visibility:hidden!important}
     <button class="secundario" onclick="limpiarFiltros()">✕ Limpiar filtros</button>
     <button class="secundario" onclick="abrirTarjetaCliente()">🖼️ Resumen visual</button>
     <button onclick="abrirVistaObservadores()">👁️ Vista observadores</button>
-    <button class="secundario" onclick="copiarLinkObservadores()">🔗 Copiar link</button>
   </div>
 
   <div id="infoCarga" style="font-size:12px;color:var(--stone);margin:0 0 10px;"></div>
@@ -1167,25 +1166,6 @@ const URL_OBSERVADORES = "https://iaanalistalives-ux.github.io/seguimiento-parti
 
 function abrirVistaObservadores(){
   window.open(URL_OBSERVADORES, '_blank');
-}
-
-function copiarLinkObservadores(){
-  const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = URL_OBSERVADORES;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); showToast('Link copiado al portapapeles'); }
-    catch(e){ window.prompt('Copia el link manualmente:', URL_OBSERVADORES); }
-    document.body.removeChild(ta);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(URL_OBSERVADORES)
-      .then(() => showToast('Link copiado al portapapeles'))
-      .catch(fallback);
-  } else {
-    fallback();
-  }
 }
 
 // ---------- Exportar Excel real (incluye comentario, para compartir con el resto) ----------
