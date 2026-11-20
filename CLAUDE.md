@@ -2,6 +2,9 @@
 
 Las reglas generales de trabajo están en el repo privado `lives-instrucciones` (CLAUDE.md). Este archivo solo describe esta herramienta.
 
+## Estado: reserva (desde el 20/11/2026)
+Seguimiento de Partidas ya vive en el sistema interno de la empresa: Sistemas la migró con el paquete entregado el 19/11/2026 y quitó sus 4 opciones del menú del portal (app.lives.com.pe). Este repo, sus pantallas y las tablas y funciones `sp_` de Supabase se conservan sin cambios como reserva, para ajustarla si Sistemas pide algo y mostrarles cómo la necesitamos. No se borra nada sin orden expresa de Christian. Los datos de Supabase quedaron como estaban al migrar; el dato vigente es el del sistema de la empresa.
+
 ## Qué hace
 Sigue las partidas de tela del reporte semanal de PCP. Cada registro es partida + tela + color + servicio, con prioridad (URGENTE / 1 este mes / 2 próximo mes / 3 después), grupo, kg, estilo, ruta y fecha hito, y tres seguimientos: **Aprobación** (la marca Calidad: Pendiente / Aprobación Interna / Aprobación Cliente), **Llegada** (la marca Producción Textil: Pendiente / Por confirmar / Confirmada) y **Comentario**. Cada fila está Activa o Cerrada.
 - `seguimiento.html` — **pantalla principal de PCP** (con usuario del portal): KPIs (partidas, urgentes, kg, pendientes de aprobación y de llegada), filtros, comentarios y **carga del reporte semanal** (Excel de PCP; primero muestra una vista previa de nuevas, actualizadas, cerradas y omitidas; las que no vienen pasan a Cerrado y se conservan aprobación, llegada y comentario). Exporta Excel propio y una tarjeta PNG ("Resumen visual") para el cliente.
