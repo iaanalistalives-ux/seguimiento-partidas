@@ -732,6 +732,18 @@ html.lsPoOn body>*:not(#lsPo){visibility:hidden!important}
     width:100%; min-height:100px; border:1px solid var(--borde); border-radius:8px;
     padding:8px; font-family:inherit; font-size:13px; resize:vertical;
   }
+  .zona-rpt{
+    display:block; border:2px dashed var(--borde); border-radius:10px; padding:18px 12px;
+    text-align:center; cursor:pointer; background:#F7FAF9; transition:background .15s,border-color .15s;
+  }
+  .zona-rpt:hover{ border-color:var(--accent); }
+  .zona-rpt.encima{ border-color:var(--accent); background:#EFFCF6; }
+  .zona-rpt .zr-ico{ font-size:26px; line-height:1; }
+  .zona-rpt .zr-txt{ font-size:13px; font-weight:700; color:var(--header); margin-top:6px; }
+  .zona-rpt .zr-o{ font-size:12px; color:#667; margin:4px 0 8px; }
+  .zona-rpt input[type=file]{ max-width:100%; font-size:12px; }
+  .zona-rpt .zr-nombre{ font-size:12px; color:#667; margin-top:8px; word-break:break-all; }
+  .zona-rpt .zr-nombre:empty{ display:none; }
   .modal-acciones{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
   .modal-acciones button{ border-radius:6px; padding:8px 14px; font-size:13px; cursor:pointer; border:1px solid var(--borde); background:#fff; }
   .modal-acciones button.guardar{ background:var(--accent); color:#fff; border-color:var(--accent); }
@@ -914,8 +926,14 @@ html.lsPoOn body>*:not(#lsPo){visibility:hidden!important}
 <div class="modal-overlay" id="modalCarga">
   <div class="modal-box">
     <h3>Cargar reporte semanal de PCP</h3>
-    <div class="sub">Elige el Excel que exporta PCP (el mismo que antes se pegaba en la pestaña Rpt). Primero verás qué va a cambiar; nada se guarda hasta que confirmes.</div>
-    <input type="file" id="archivoRpt" accept=".xlsx,.xls,.xlsm,.csv" onchange="procesarArchivoRpt(this.files[0])">
+    <div class="sub">Arrastra o elige el Excel que exporta PCP (el mismo que antes se pegaba en la pestaña Rpt). Primero verás qué va a cambiar; nada se guarda hasta que confirmes.</div>
+    <label class="zona-rpt" id="zonaRpt" for="archivoRpt">
+      <div class="zr-ico">📥</div>
+      <div class="zr-txt">Arrastra aquí el Excel de PCP</div>
+      <div class="zr-o">o elígelo desde tu equipo</div>
+      <input type="file" id="archivoRpt" accept=".xlsx,.xls,.xlsm,.csv" onchange="elegirArchivoRpt(this.files[0])">
+      <div class="zr-nombre" id="zonaRptNombre"></div>
+    </label>
     <div id="cargaResumen" class="carga-resumen"></div>
     <div class="modal-acciones">
       <button onclick="cerrarCargaRpt()">Cancelar</button>
@@ -1414,6 +1432,8 @@ async function mostrarUltimaCarga(){
 function abrirCargaRpt(){
   CARGA = null;
   document.getElementById('archivoRpt').value = '';
+  document.getElementById('zonaRptNombre').textContent = '';
+  document.getElementById('zonaRpt').classList.remove('encima');
   document.getElementById('cargaResumen').innerHTML = '';
   document.getElementById('btnConfirmarCarga').disabled = true;
   document.getElementById('modalCarga').classList.add('show');
@@ -1422,6 +1442,53 @@ function cerrarCargaRpt(){
   document.getElementById('modalCarga').classList.remove('show');
   CARGA = null;
 }
+/* Elegir con el botón o arrastrar: los dos caminos terminan en procesarArchivoRpt */
+function elegirArchivoRpt(file){
+  document.getElementById('zonaRptNombre').textContent = '';
+  procesarArchivoRpt(file);
+}
+(function(){
+  const modal = document.getElementById('modalCarga');
+  const zona = document.getElementById('zonaRpt');
+  const abierto = () => modal.classList.contains('show');
+  const traeArchivo = e => e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+  let dentro = 0;
+  /* Con la ventana abierta se puede soltar en cualquier parte de ella: así el navegador nunca abre el Excel por error */
+  window.addEventListener('dragenter', e => {
+    if (!abierto() || !traeArchivo(e)) return;
+    e.preventDefault(); dentro++; zona.classList.add('encima');
+  });
+  window.addEventListener('dragover', e => {
+    if (!abierto() || !traeArchivo(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+  });
+  window.addEventListener('dragleave', e => {
+    if (!abierto() || !traeArchivo(e)) return;
+    dentro = Math.max(0, dentro - 1);
+    if (!dentro) zona.classList.remove('encima');
+  });
+  window.addEventListener('drop', e => {
+    if (!abierto() || !traeArchivo(e)) return;
+    e.preventDefault(); dentro = 0; zona.classList.remove('encima');
+    const files = e.dataTransfer.files;
+    if (!files || !files.length) return;
+    const file = files[0];
+    const input = document.getElementById('archivoRpt');
+    const nombre = document.getElementById('zonaRptNombre');
+    input.value = '';
+    if (!/\.(xlsx|xls|xlsm|csv)$/i.test(file.name)){
+      nombre.textContent = '';
+      CARGA = null; document.getElementById('btnConfirmarCarga').disabled = true;
+      document.getElementById('cargaResumen').innerHTML = '<div class="alerta">Ese archivo no es un Excel (.xlsx, .xls, .xlsm o .csv).</div>';
+      return;
+    }
+    /* El selector muestra el archivo soltado; si el navegador no lo permite, el nombre sale debajo */
+    let puesto = false;
+    try{ const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files; puesto = input.files.length === 1; }catch(x){}
+    nombre.textContent = files.length > 1 ? 'Se toma solo el primero: ' + file.name : (puesto ? '' : 'Archivo: ' + file.name);
+    procesarArchivoRpt(file);
+  });
+})();
 async function procesarArchivoRpt(file){
   const caja = document.getElementById('cargaResumen');
   const btn = document.getElementById('btnConfirmarCarga');
